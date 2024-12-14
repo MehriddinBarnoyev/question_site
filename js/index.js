@@ -1,5 +1,8 @@
 let correctAnswers = [];
 let userScore = 0;
+let gameHistory = [];
+let gameNumber = 1;
+let resultSubmitted = false;
 
 const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -9,13 +12,50 @@ const shuffleArray = (array) => {
     return array;
 };
 
+const updateHistoryTable = () => {
+    const historyTableBody = document.getElementById('historyTableBody');
+    if (!historyTableBody) {
+        const historyTable = `
+            <div class="mt-8">
+                <h2 class="text-xl font-bold mb-4">O'yinlar tarixi</h2>
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border p-2">O'yin №</th>
+                            <th class="border p-2">Natija</th>
+                            <th class="border p-2">Foiz</th>
+                            <th class="border p-2">Sana</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody"></tbody>
+                </table>
+            </div>
+        `;
+        document.getElementById('generatedQuestions').insertAdjacentHTML('afterend', historyTable);
+    }
+    
+    const tableBody = document.getElementById('historyTableBody');
+    tableBody.innerHTML = gameHistory.map(game => `
+        <tr class="hover:bg-gray-50">
+            <td class="border p-2 text-center">${game.gameNumber}</td>
+            <td class="border p-2 text-center">${game.score}/${game.total}</td>
+            <td class="border p-2 text-center">${game.percentage}%</td>
+            <td class="border p-2 text-center">${game.date}</td>
+        </tr>
+    `).join('');
+};
+
 const resetQuiz = () => {
     correctAnswers = [];
     userScore = 0;
+    gameNumber++;
+    resultSubmitted = false;
     giveQuestions();
 };
 
 const checkAnswers = () => {
+    if (resultSubmitted) return; // Agar natija allaqachon yuborilgan bo'lsa, funksiyadan chiqib ketamiz
+
     userScore = 0;
     const questions = document.querySelectorAll('.question-container');
     
@@ -29,7 +69,28 @@ const checkAnswers = () => {
         }
     });
 
-     document.getElementById('score').textContent = `Sizning natijangiz: ${userScore}/${correctAnswers.length}`;
+    const percentage = Math.round((userScore / correctAnswers.length) * 100);
+    const currentDate = new Date().toLocaleString();
+    
+    gameHistory.push({
+        gameNumber: gameNumber,
+        score: userScore,
+        total: correctAnswers.length,
+        percentage: percentage,
+        date: currentDate
+    });
+
+    document.getElementById('score').textContent = `Sizning natijangiz: ${userScore}/${correctAnswers.length} (${percentage}%)`;
+    updateHistoryTable();
+
+    // Result tugmasini o'chirib tashlaymiz
+    const checkAnswersButton = document.getElementById('checkAnswers');
+    if (checkAnswersButton) {
+        checkAnswersButton.disabled = true;
+        checkAnswersButton.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    resultSubmitted = true;
 };
 
 const giveQuestions = () => {
@@ -37,16 +98,15 @@ const giveQuestions = () => {
     const questionDifficulty = document.getElementById("difficulty").value.toLowerCase();
     const questionType = document.getElementById("questionType").value.toLowerCase();
 
+    const generatedQuestions = document.getElementById("generatedQuestions");
+    generatedQuestions.innerHTML = "";
+
     axios
         .get(
             `https://opentdb.com/api.php?amount=${questionCount}&difficulty=${questionDifficulty}&type=${questionType}`
         )
         .then((res) => {
             console.log(res.data.results);
-
-            const generatedQuestions = document.getElementById("generatedQuestions");
-            // generatedQuestions.innerHTML = ""; 
-            // giveQuestions()
 
             correctAnswers = res.data.results.map(question => question.correct_answer);
 
@@ -71,7 +131,7 @@ const giveQuestions = () => {
                 </div>`;
             });
 
-             generatedQuestions.innerHTML += `
+            generatedQuestions.innerHTML += `
                 <div class="mt-6 flex gap-4">
                     <button id="checkAnswers" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                         Result
@@ -82,7 +142,7 @@ const giveQuestions = () => {
                 </div>
                 <div id="score" class="mt-4 text-xl font-bold"></div>`;
 
-             document.getElementById("checkAnswers")?.addEventListener("click", checkAnswers);
+            document.getElementById("checkAnswers")?.addEventListener("click", checkAnswers);
             document.getElementById("playAgain")?.addEventListener("click", resetQuiz);
         })
         .catch((err) => {
