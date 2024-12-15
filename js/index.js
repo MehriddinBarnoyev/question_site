@@ -33,7 +33,7 @@ const updateHistoryTable = () => {
         `;
         document.getElementById('generatedQuestions').insertAdjacentHTML('afterend', historyTable);
     }
-    
+
     const tableBody = document.getElementById('historyTableBody');
     tableBody.innerHTML = gameHistory.map(game => `
         <tr class="hover:bg-gray-50">
@@ -54,11 +54,11 @@ const resetQuiz = () => {
 };
 
 const checkAnswers = () => {
-    if (resultSubmitted) return; // Agar natija allaqachon yuborilgan bo'lsa, funksiyadan chiqib ketamiz
+    if (resultSubmitted) return; 
 
     userScore = 0;
     const questions = document.querySelectorAll('.question-container');
-    
+
     questions.forEach((question, index) => {
         const selectedAnswer = question.querySelector(`input[name="question${index}"]:checked`)?.nextElementSibling?.textContent;
         if (selectedAnswer === correctAnswers[index]) {
@@ -71,7 +71,7 @@ const checkAnswers = () => {
 
     const percentage = Math.round((userScore / correctAnswers.length) * 100);
     const currentDate = new Date().toLocaleString();
-    
+
     gameHistory.push({
         gameNumber: gameNumber,
         score: userScore,
@@ -83,8 +83,7 @@ const checkAnswers = () => {
     document.getElementById('score').textContent = `Sizning natijangiz: ${userScore}/${correctAnswers.length} (${percentage}%)`;
     updateHistoryTable();
 
-    // Result tugmasini o'chirib tashlaymiz
-    const checkAnswersButton = document.getElementById('checkAnswers');
+     const checkAnswersButton = document.getElementById('checkAnswers');
     if (checkAnswersButton) {
         checkAnswersButton.disabled = true;
         checkAnswersButton.classList.add('opacity-50', 'cursor-not-allowed');
@@ -97,7 +96,6 @@ const giveQuestions = () => {
     const questionCount = document.getElementById("questionCount").value.toLowerCase();
     const questionDifficulty = document.getElementById("difficulty").value.toLowerCase();
     const questionType = document.getElementById("questionType").value.toLowerCase();
-
     const generatedQuestions = document.getElementById("generatedQuestions");
     generatedQuestions.innerHTML = "";
 
@@ -157,3 +155,4 @@ document.addEventListener("DOMContentLoaded", () => {
         generateButton.addEventListener("click", giveQuestions);
     }
 });
+
